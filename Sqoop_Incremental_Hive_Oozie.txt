@@ -1,0 +1,70 @@
+-- MySQL Table
+
+CREATE TABLE Employee
+(
+	id int primary key, 
+	name varchar(16),
+	salary double,
+	department varchar(16)
+);
+------------------------------------------------------------------------------------------------------------------
+
+--SQOOP Regular Import into Hive Staging Table
+
+sqoop import 
+--connect 'jdbc:mysql://localhost:3306/test' 
+--driver 'com.mysql.jdbc.Driver' 
+--username 'root' 
+--password 'root' 
+--table 'Employee'
+--m 2
+--split-by 'id'
+--fields-terminated-by ','
+--compression-codec 'org.apache.hadoop.io.compress.SnappyCodec'
+--as-avrodatafile
+--null-string 'N/A'
+--create-hive-table 
+--hive-import 
+--hive-table 'trushdb.Emp_Staging'
+------------------------------------------------------------------------------------------------------------------
+
+--Hive External Table
+
+CREATE EXTERNAL TABLE trushdb.Emp_External
+{
+	empId int,
+	empName String,
+	empSalary double
+}
+PARTITIONED BY (empDept String)
+STORED AS AVRO 
+LOCATION 'hdfs://..../apps/hive/warehouse/trushdb/Emp_External';
+
+INSERT OVERWRITE TABLE Emp_External 
+SELECT empId, empName, empSalary, empDept FROM Emp_Staging;
+------------------------------------------------------------------------------------------------------------------
+
+--SQOOP Increment Import into Hive External Table
+
+sqoop import 
+--connect 'jdbc:mysql://localhost:3306/test' 
+--driver 'com.mysql.jdbc.Driver' 
+--username 'root' 
+--password 'root' 
+--table 'Employee'
+--m 2
+--split-by 'id'
+--fields-terminated-by ','
+--compression-codec 'org.apache.hadoop.io.compress.SnappyCodec'
+--as-avrodatafile
+--null-string 'N/A'
+--target-dir 'hdfs://..../apps/hive/warehouse/trushdb/Emp_Staging' 
+--incremental append
+--check-column 'empId' 
+--last-value 5
+------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
