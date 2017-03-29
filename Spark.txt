@@ -1,0 +1,548 @@
+RDD Transformations:
+
+/* Transformations on RDD */
+
+map(f)	
+	Apply a function to each element in the RDD and return an RDD of the result. 
+
+Example	:rdd.map(x => x + 1)
+Input		:{1, 2, 3, 3}
+Output	:{2, 3, 4, 4}
+
+flatMap(f)	
+	Apply a function to each element in the RDD and return an RDD of the contents of the iterators returned. Often used to extract words. 
+
+Example	:rdd.flatMap(x => x.to(3))
+Input		:{1, 2, 3, 3}
+Output	:{1, 2, 3, 2,3, 3, 3}
+
+filter(f)	
+	Return an RDD consisting of only elements that pass the condition passed to filter().
+
+Example	:rdd.filter(x => x != 1) 
+Input		:{1, 2, 3, 3}
+Ouput		:{2, 3, 3}
+
+distinct([numTasks])
+	Remove duplicates. 
+
+Example	:rdd.distinct()
+Input		:{1, 2, 3, 3}
+Output	:{1, 2, 3}
+
+mapPartitions(f)
+	Return new RDD by applying a function to each partition of this RDD.
+
+Example	:rdd.mapPartitions(x => (x.sum, 42).productIterator)
+Input		:Array(1, 2, 3), 2
+Output	:{1, 42, 5, 42}
+
+mapPartitionsWithIndex(f)
+	Return a new RDD by applying a function to each partition of this RDD, while tracking the index of the original partition.
+
+Example	:rdd.mapPartitionsWithIndex((x, y)  => 
+						    (x, y.sum).productIterator)
+Input		:Array(1, 2, 3), 2
+Output	:{Array(0, 1), Array(1, 5)}
+
+
+
+coalesce(numPartitions)
+	Return a new RDD which is reduced to a smaller number of partitions
+
+Example	:rdd.coalesce(2)
+Input		:Array(1, 2, 3, 4, 5), 3
+Output	:{(1), {2, 3, 4, 5)}
+
+repartition(numPartitions)
+	Reshuffle the data in the RDD randomly to create either more or fewer partitions and balance it across them. This always shuffles all data over the network
+
+sample(withReplacement, fraction, [seed])
+	Sample an RDD, with or without replacement.
+
+Example	:rdd.sample(false, 0.5)	
+Input		:{1, 2, 3, 3}
+Output	:Nondeterministic
+
+union(otherDataset)
+	Produce an RDD containing elements from both RDDs. 
+
+Example	:rdd.union(other) 
+Input		:{1, 2, 3} and {3, 4, 5}	
+Output	:{1, 2, 3, 3, 4, 5}
+
+intersection(otherDataset)
+	RDD containing only elements found in both RDDs.
+
+Example	:rdd.intersection(other)
+Input		:{1, 2, 3} and {3, 4, 5}
+Output	:{3}
+
+subtract(otherDataset)
+	Remove the contents of one RDD (e.g., remove training data). 
+
+Example	:rdd.subtract(other)
+Input		:{1, 2, 3} and {3, 4, 5}
+Output	:{1, 2}
+
+cartesian(otherDataset)
+	Cartesian product with the other RDD. 
+
+Example	:rdd.cartesian(other)
+Input		:{1, 2, 3} and {3, 4, 5}
+Output	:{(1,3), (1,4), (1,5), (2,3), (2,4), (2,5), (3,3), (3,4), 		 (3,5)}
+
+
+
+
+
+
+
+groupBy()
+	Group the data in the original RDD. Create pairs where the key is the output of a user function, and the value is all items for which the function yields this key.
+
+
+Example	:x.groupBy(w => w.charAt(0))
+Input		:{"John", "Fred", "Anna", "James"}
+Output	:{('A',['Anna']),('J',['John','James']),('F',['Fred'])}
+
+pipe(command, [envVars])
+	Pipe each partition of the RDD through a shell command, e.g. a Perl or bash script.
+
+Example	:sc.addFile(distScript);
+	 	 rdd.pipe(Seq(SparkFiles.get(distScriptName)))
+
+/* Transformations on Pair RDD */
+
+reduceByKey(f, [numTask])
+	Combine values with the same key. 
+
+Example	:rdd.reduceByKey((x, y) => x + y) 
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{(1,2), (3,10)}
+
+groupByKey([numTask])
+	Group values with the rdd.groupByKey() same key. 
+
+Example	:rdd.groupByKey() 
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{(1,[2]),(3, [4,6])}
+
+mapValues(f)
+	Apply a function to each value of a pair RDD without changing the key. 
+
+Example	:rdd.mapValues(x => x + 1) 
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{(1,3), (3,5), (3,7)}
+
+flatMapValues(f)
+	Apply a function that returns an iterator to each value of a pair RDD, and for each element returned, produce a key/value entry with the old key. Often used for tokenization. 
+
+Example	:rdd.flatMapValues(x => (x to 5))
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{(1,2), (1,3), (1,4), (1,5), (3,4), (3,5)}
+
+
+
+
+
+keys()
+	Return an RDD of just the keys. 
+
+Example	:rdd.keys() 
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{1, 3, 3}
+
+values()
+	Return an RDD of just the values. 
+
+Example	:rdd.values() 
+Input		:{(1, 2), (3, 4), (3, 6)}	
+Output	:{2, 4, 6}
+
+sortByKey([ascending], [numTask])
+	Return an RDD sorted by the key. 
+
+Example	:rdd.sortByKey(ascending=true)
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{(1,2), (3,4), (3,6)}
+
+subtractByKey()
+	Remove elements with a key present in the other RDD. 
+
+Example	:rdd.subtractByKey(other) 
+Input		:(rdd = {(1, 2), (3, 4), (3, 6)} other = {(3, 9)})
+Output	:{(1, 2)}
+
+join(otherDataset)
+	Perform an inner join between two RDDs. 
+
+Example	:rdd.join(other) 
+Input		:(rdd = {(1, 2), (3, 4), (3, 6)} other = {(3, 9)})
+Output	:{(3,(4,9)), (3,(6,9))}
+
+fullOuterJoin(otherDataset)
+	Perform an full join between two RDDs. 
+
+Example	:rdd.fullOuterJoin(other) 
+Input		:(rdd = {(1, 2), (3, 4), (3, 6)} other = {(3, 9)})
+Output	:{(1,(Some(2),None)), (3,(Some(4),Some(9))), 			 		 (3,(Some(6),Some(9)))}
+
+leftOuterJoin(otherDataset)
+	Perform a join between two RDDs where the key must be present in the other RDD. 
+
+Example	:rdd.leftOuterJoin(other) 
+Input		:(rdd = {(1, 2), (3, 4), (3, 6)} other = {(3, 9)})
+Output	:{(1,(2,None)), (3,(4,Some(9))), (3,(6,Some(9)))}
+
+
+
+
+rightOuterJoin(otherDataset)
+	Perform a join between two RDDs where the key must be present in the first RDD.
+
+Example	:rdd.rightOuterJoin(other)
+Input		:(rdd = {(1, 2), (3, 4), (3, 6)} other = {(3, 9)})
+Output	:{(3,(Some(4),9)), (3,(Some(6),9))}
+
+cogroup(otherDataset)
+	Group data from both RDDs sharing the same key. 
+
+Example	:rdd.cogroup(other)
+Input		:(rdd = {(1, 2), (3, 4), (3, 6)} other = {(3, 9)})
+Output	:{(1,([2],[])), (3,([4, 6],[9]))}
+
+combineByKey(createCombiner,mergeValue,mergeCombiners,partitioner )
+	Combine values with the same key using a different result type. 
+
+Example	:rdd.combineByKey(x : Int => (x, 1), 
+					(acc:(Int,Int),x)=>(acc._1 + x, acc._2 + 1), 					(acc._1 : (Int, Int), acc._2 :(Int, Int) => 					(acc1._1 + acc2._1, acc1._2 + acc2._2))
+Input		:{("A", 3), ("A", 9), ("A", 4), ("A", 0), ("B", 10), 
+		 ("B",11), ("B", 4), ("C", 2), ("C", 1)}
+Output	:{(A, 16), (B, 25), (C, 3)}
+
+foldByKey()
+	Very similar to fold but performs the folding separately for each key of the RDD.
+
+Example	:rdd.foldByKey("dummy", 0.0)
+   ((x, y) => if(x._2 > y._2) x else y)
+Input		:{("cs", ("jack", 1000.0)), ("cs", ("bron", 1200.0)),("phy", 		 ("sam", 2200.0)),("phy", ("ronaldo", 500.0))}
+Output	:{("cs", ("bron", 1200.0)), ("sam", 2200.0))}
+
+aggregateByKey()
+	Works like the aggregate function except the aggregation is applied to the value with the same key. Also unlike the aggregate function the initial value is not applied to second reduce.
+
+Example	:rdd.aggregateByKey(0)(math.max(_,_), (_+_))
+Input		:List(("cat", 2), ("cat", 5), ("mouse", 4), ("cat", 12), 			 ("dog", 12), ("mouse", 2)), 2
+Output	:{(dog, 12), (cat, 17), (mouse, 6)}
+
+
+
+
+
+
+
+
+
+partitionBy():
+	Return a new RDD with the specified number of partitions, placing original items into the partition returned by a user supplied function.
+
+import org.apache.spark.Partitioner
+Input		:Array(('J',"Jam"),('F',"Fred"),('A',"Ana"),('J',"John")), 3
+		val y = x.partitionBy(new Partitioner() {
+		val numPartitions = 2
+		def getPartition(k:Any) = 
+		{if (k.asInstanceOf[Char] < 'H') 0 else 1}})
+
+Input		:{Array((A, Ana), (F,Fred)),Array((J,John), (J, Jam))}
+Output	:{Array((F,Fred), (A, Ana)),Array((J,John), (J, Jam))}
+
+RDD Actions:
+
+/* Actions on RDD */
+
+collect()
+	Return all elements from the RDD. 
+
+Example	:rdd.collect() 
+Input		:{1, 2, 3, 3}
+Output	:{1, 2, 3, 3}
+
+count()
+	Number of elements in the RDD. 
+
+Example	:rdd.count() 
+Input		:{1, 2, 3, 3}
+Output	:4
+
+countByValue()
+	Number of times each element occurs in the RDD. 
+
+Example	:rdd.countByValue() 
+Input		:{1, 2, 3, 3}
+Output	:{(1, 1),(2, 1),(3, 2)}
+
+take(num)
+	Return num elements from the RDD. 
+
+Example	:rdd.take(2) 
+Input		:{1, 2, 3, 3}
+Output	:{1, 2}
+
+top(num)
+	Return the top num elements the RDD. 
+
+Example	:rdd.top(2) 
+Input		:{1, 2, 3, 3}
+Output	:{3, 3}
+
+
+first()
+	Return first element from the RDD.
+
+Example	:rdd.first()
+Input		:{1, 2, 3, 3}
+Output	:{1}
+
+takeOrdered(num)(ordering)
+	Return num elements based on provided ordering. 
+
+Example	:rdd.takeOrdered(2)(Ordering[Int])			// Ascending 
+Example	:rdd.takeOrdered(2)(Ordering[Int].reverse)	// Descending 
+Example	:rdd.takeOrdered(2)(Ordering[Int].reverse.on(x => x.age))	
+Input		:{Person("Bob", 30), Person("Andy", 32), Person("Corey", 19)}
+Output	:{Person(Andy,32), Person(Bob,30)}
+
+takeSample(withReplacement, num, [seed])
+	Return num elements at random. 	
+
+Example	:rdd.takeSample(false, 1) 
+Input		:{1, 2, 3, 3}
+Output	:Nondeterministic
+
+reduce(f)
+	Combine the elements of the RDD together in parallel (e.g., sum). 
+
+Example	:rdd.reduce((x, y) => x + y) 
+Input		:{1, 2, 3, 3}
+Output	:9
+
+fold(zero,f)
+	Same as reduce() but with the provided zero value.
+
+Example	:rdd.fold(0)((x, y) => x + y) 
+Input		:{1, 2, 3, 3}
+Output	:9
+
+aggregate(zeroValue)(seqOp, combOp)
+	Similar to reduce() but used to return a different type.
+
+Example	:rdd.aggregate((0, 0)) 
+				   ((x, y) => (x._1 + y, x._2 + 1), 
+				   (x, y) => (x._1 + y._1, x._2 + y._2)) 
+Input		:{1, 2, 3, 3}
+Output	:(9,4)
+
+forEach(f)
+	Apply the provided function to each element of the RDD.
+
+Example	:rdd.foreach(x => print(x * x)) 	
+Input		:{1, 2, 3, 3}
+Output	:1499
+
+
+forEachPartition():
+	
+Example	:rdd.foreachPartition(partition => 						 partition.foreach(item => println(item._1 + “ “ + item._2)))
+
+sum():Total
+mean():Average of the elements
+variance():Variance of the elements
+sampleVariance():Variance of the elements, computed for a sample
+stdev():Standard deviation
+sampleStdev():Sample standard deviation
+
+/* Actions on Pair RDD */
+
+countByKey()
+	Count the number of elements for each key. 
+
+Example	:rdd.countByKey() 
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{(1, 1), (3, 2)}
+
+lookup(key)
+	Return all values associated with the provided key.
+
+Example	:rdd.lookup(3)
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:{4, 6}
+
+collectAsMap()
+	Collect the result as a map to provide easy lookup.
+
+Example	:rdd.collectAsMap()
+Input		:{(1, 2), (3, 4), (3, 6)}
+Output	:Map{(1, 2), (3, 4), (3, 6)}
+
+/* Common Actions on RDD */
+
+max():Maximum value
+min():Minimum value
+
+Loading and Saving:
+
+1. TextFile:
+
+val input = sc.textFile("file:///home/holden/repos/spark/README.md")
+val input = sc.wholeTextFiles("file://home/holden/salesFiles")	// PairRDD (Key = FileName, Value = FileContents)
+result.saveAsTextFile(outputFile)
+
+
+
+
+
+
+2. JSON:
+
+/* Python */
+
+import json
+data = input.map(lambda x: json.loads(x))
+data.filter(lambda x: x['lovesPandas']).map(lambda x: json.dumps(x)).saveAsTextFile(outputFile)
+
+/* Scala */
+
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.DeserializationFeature
+
+case class Person(name: String, lovesPandas: Boolean) // Must be a top-level class
+
+val result = input.flatMap(record => {Some(new ObjectMapper().readValue(record, classOf[Person]))})
+result.filter(p => P.lovesPandas).map(mapper.writeValueAsString(Person)).saveAsTextFile(outputFile)
+
+/* Java */
+
+val result = input.flatMap(record => {Some(new ObjectMapper().readValue(record, Person.class))})
+
+3. CSV:
+
+/* Python */
+
+import csv
+import StringIO
+...
+def loadRecord(line):
+"""Parse a CSV line"""
+input = StringIO.StringIO(line)
+reader = csv.DictReader(input, fieldnames=["name", "favouriteAnimal"])
+return reader.next()
+
+input = sc.textFile(inputFile).map(loadRecord)
+
+def writeRecords(records):
+"""Write out CSV lines"""
+output = StringIO.StringIO()
+writer = csv.DictWriter(output, fieldnames=["name", "favoriteAnimal"])
+for record in records:
+writer.writerow(record)
+return [output.getvalue()]
+
+result.mapPartitions(writeRecords).saveAsTextFile(outputFile)
+
+/* Scala */
+
+import Java.io.StringReader
+import au.com.bytecode.opencsv.CSVReader
+
+case class Person(name: String, favoriteAnimal: String)
+...
+val input = sc.textFile(inputFile)
+val result = input.map{ line =>
+val reader = new CSVReader(new StringReader(line));
+reader.readNext().map(x => Person(x(0), x(1)));
+}
+
+result.map(person => List(person.name, person.favoriteAnimal).toArray)
+.mapPartitions{people =>
+val stringWriter = new StringWriter();
+val csvWriter = new CSVWriter(stringWriter);
+csvWriter.writeAll(people.toList)
+Iterator(stringWriter.toString)
+}.saveAsTextFile(outFile)
+
+4. SequenceFiles:
+
+data = sc.sequenceFile(inFile,"org.apache.hadoop.io.Text", "org.apache.hadoop.io.IntWritable", numPartitions)
+
+val data = sc.sequenceFile(inFile, classOf[Text], classOf[IntWritable], numPartitions).map{case (x, y) => (x.toString, y.get())}
+
+JavaPairRDD<Text, IntWritable> input = sc.sequenceFile(inFile, Text.class, IntWritable.class, numPartitions);
+JavaPairRDD<String, Integer> result = input.mapToPair(new ConvertToNativeTypes());
+
+result.saveAsSequenceFile(outputFile)
+
+5. ObjectFiles:
+
+data = sc.pickleFile(inFile)
+result.saveAsPickleFile()
+
+val data = sc.objectFile(inFile)
+result.saveAsObjectFile()
+
+6. Hadoop Input and Output Format:
+
+val input = sc.hadoopFile[Text, Text, KeyValueTextInputFormat](inputFile).map{case (x, y) => (x.toString, y.toString)}
+
+val input = sc.newAPIHadoopFile(inputFile, classOf[LzoJsonInputFormat], classOf[LongWritable], classOf[MapWritable], conf)
+
+JavaPairRDD<String, Integer> rdd = sc.parallelizePairs(input);
+JavaPairRDD<Text, IntWritable> result = rdd.mapToPair(new ConvertToWritableTypes());
+result.saveAsHadoopFile(fileName, Text.class, IntWritable.class, SequenceFileOutputFormat.class);
+
+7. Non FileSystem Data Sources:
+
+hadoopDataset()/newAPIHadoopDataset()
+saveAsHadoopDataset()/saveAsNewAPIHadoopDataset()
+
+JDBC Connectivity:
+
+def createConnection() = {
+Class.forName("com.mysql.jdbc.Driver").newInstance();
+DriverManager.getConnection("jdbc:mysql://localhost/test?user=holden");
+}
+
+def extractValues(r: ResultSet) = {
+(r.getInt(1), r.getString(2))
+}
+
+val data = new JdbcRDD(sc,createConnection, "SELECT * FROM panda WHERE ? <= id AND id <= ?",lowerBound = 1, upperBound = 3, numPartitions = 2, mapRow = extractValues)
+println(data.collect().toList)
+
+Cassandra:
+
+val conf = new SparkConf(true).set("spark.cassandra.connection.host", "hostname")
+val sc = new SparkContext(conf)
+
+import com.datastax.spark.connector._
+// Read entire table as an RDD. Assumes your table test was created as
+// CREATE TABLE test.kv(key text PRIMARY KEY, value int);
+val data = sc.cassandraTable("test" , "kv")
+// Print some basic stats on the value field.
+data.map(row => row.getInt("value")).stats()
+
+val rdd = sc.parallelize(List(Seq("moremagic", 1)))
+rdd.saveToCassandra("test" , "kv", SomeColumns("key", "value"))
+
+HBase:
+
+import org.apache.hadoop.hbase.HBaseConfiguration
+import org.apache.hadoop.hbase.client.Result
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat
+
+val conf = HBaseConfiguration.create()
+conf.set(TableInputFormat.INPUT_TABLE, "tablename")	// which table to scan
+val rdd = sc.newAPIHadoopRDD(conf, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result])
